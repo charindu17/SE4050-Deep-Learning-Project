@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -42,7 +43,11 @@ class ModelEvaluator:
         
         plt.tight_layout()
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            # Resolve relative paths against repository root (parent of utils/)
+            repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+            full_save_path = save_path if os.path.isabs(save_path) else os.path.join(repo_root, save_path)
+            os.makedirs(os.path.dirname(full_save_path), exist_ok=True)
+            plt.savefig(full_save_path, dpi=300, bbox_inches='tight')
         plt.show()
         
     def generate_classification_report(self):
@@ -75,7 +80,10 @@ class ModelEvaluator:
         plt.xlabel('Predicted Label')
         
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+            full_save_path = save_path if os.path.isabs(save_path) else os.path.join(repo_root, save_path)
+            os.makedirs(os.path.dirname(full_save_path), exist_ok=True)
+            plt.savefig(full_save_path, dpi=300, bbox_inches='tight')
         plt.show()
         
     def plot_roc_curve(self, save_path=None):
@@ -97,7 +105,10 @@ class ModelEvaluator:
             plt.grid(True)
             
             if save_path:
-                plt.savefig(save_path, dpi=300, bbox_inches='tight')
+                repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+                full_save_path = save_path if os.path.isabs(save_path) else os.path.join(repo_root, save_path)
+                os.makedirs(os.path.dirname(full_save_path), exist_ok=True)
+                plt.savefig(full_save_path, dpi=300, bbox_inches='tight')
             plt.show()
             
             return auc_score
@@ -105,17 +116,18 @@ class ModelEvaluator:
     
     def save_results(self, report, cm, save_dir='results/model_performance/'):
         """Save all results to files"""
-        import os
-        os.makedirs(save_dir, exist_ok=True)
-        
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        full_save_dir = save_dir if os.path.isabs(save_dir) else os.path.join(repo_root, save_dir)
+        os.makedirs(full_save_dir, exist_ok=True)
+
         # Save classification report
-        with open(f'{save_dir}/{self.model_name}_report.json', 'w') as f:
+        with open(os.path.join(full_save_dir, f'{self.model_name}_report.json'), 'w') as f:
             json.dump(report, f, indent=2)
-            
+
         # Save confusion matrix
-        np.save(f'{save_dir}/{self.model_name}_confusion_matrix.npy', cm)
-        
+        np.save(os.path.join(full_save_dir, f'{self.model_name}_confusion_matrix.npy'), cm)
+
         # Save training history
         if self.history:
-            with open(f'{save_dir}/{self.model_name}_history.json', 'w') as f:
+            with open(os.path.join(full_save_dir, f'{self.model_name}_history.json'), 'w') as f:
                 json.dump(self.history.history, f, indent=2)
