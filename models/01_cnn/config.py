@@ -62,7 +62,10 @@ EVALUATION_CONFIG = {
 
 # Path Configuration
 PATH_CONFIG = {
-    'data_path': '../../data/processed_data/',
-    'results_path': '../../results/model_performance/',
-    'model_save_path': 'best_model.h5'
+    # paths should be relative to the repository root (not include ../.. segments)
+    'data_path': 'data/processed_data/',
+    'results_path': 'results/model_performance/',
+    # model_save_path is a filename or relative path under results or models folder
+    # Use the model path inside the model folder as requested
+    'model_save_path': 'models/01_cnn/models/CNN_Model/best_model.h5'
 }
