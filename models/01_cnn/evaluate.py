@@ -6,11 +6,21 @@ import numpy as np
 import tensorflow as tf
 from utils.data_loader import DataLoader
 from utils.metrics import ModelEvaluator
-from model import create_model, compile_model
+from model import create_cnn_model, compile_model
+# Try to load PATH_CONFIG to resolve model/results paths; fall back to defaults
+try:
+    from config import PATH_CONFIG
+except Exception:
+    PATH_CONFIG = {}
 import json
 
 def load_trained_model(model_name, model_path):
     """Load a trained model"""
+    # Resolve relative model_path against repo root
+    if not os.path.isabs(model_path):
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+        model_path = os.path.normpath(os.path.join(repo_root, model_path))
+
     if os.path.exists(model_path):
         print(f"Loading trained model from {model_path}")
         return tf.keras.models.load_model(model_path)
@@ -30,7 +40,8 @@ def evaluate_model(model_name="Model"):
     data_shapes = data_loader.get_data_shapes()
     
     # Try to load trained model
-    model_path = f'best_model.h5'
+    # Use PATH_CONFIG model_save_path if available (repo-root relative)
+    model_path = PATH_CONFIG.get('model_save_path', 'models/CNN_Model/best_model.h5')
     model = load_trained_model(model_name, model_path)
     
     if model is None:
@@ -50,13 +61,18 @@ def evaluate_model(model_name="Model"):
     # Generate reports and plots
     report, cm = evaluator.generate_classification_report()
     
-    # Create results directory
-    os.makedirs('../../results/model_performance/', exist_ok=True)
-    
+    # Resolve results path from PATH_CONFIG (repo-root relative)
+    results_path = PATH_CONFIG.get('results_path', 'results/model_performance/')
+    if not os.path.isabs(results_path):
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+        results_path = os.path.normpath(os.path.join(repo_root, results_path))
+
+    os.makedirs(results_path, exist_ok=True)
+
     # Plot results
-    evaluator.plot_confusion_matrix(cm, f'../../results/model_performance/{model_name}_cm.png')
-    evaluator.plot_roc_curve(f'../../results/model_performance/{model_name}_roc.png')
-    evaluator.save_results(report, cm, '../../results/model_performance/')
+    evaluator.plot_confusion_matrix(cm, os.path.join(results_path, f'{model_name}_cm.png'))
+    evaluator.plot_roc_curve(os.path.join(results_path, f'{model_name}_roc.png'))
+    evaluator.save_results(report, cm, save_dir=results_path)
     
     # Print results
     print(f"\n🎯 {model_name} Evaluation Results:")
